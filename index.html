@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,400;0,600;0,900;1,100;1,400;1,900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #111;
+    --white: #fff;
+    --card-max: 430px;
+    --circle-size: clamp(28px, 7.5vw, 44px);
+    --gap: clamp(5px, 1.2vw, 9px);
+    --pad-v: clamp(70px, 13vh, 96px);
+    --pad-h: clamp(24px, 6vw, 44px);
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: #e8e6e1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Card shell — full width mobile, capped on tablet+ */
+  .card-shell {
+    width: 100%;
+    max-width: var(--card-max);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Chrome */
+  .chrome {
+    position: absolute;
+    top: 16px; left: 16px; right: 16px;
+    display: flex;
+    align-items: center;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .logo {
+    pointer-events: all;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    border: 1.5px solid var(--black);
+    border-radius: 8px;
+    padding: 5px 11px;
+    background: var(--white);
+    user-select: none;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .logo:hover { background: #f5f5f5; }
+  .logo-bold { font-weight: 900; font-style: italic; font-size: 12px; color: var(--black); }
+  .logo-thin { font-weight: 100;  font-style: italic; font-size: 12px; color: var(--black); }
+
+  /* Scene + flip */
+  .scene {
+    flex: 1;
+    perspective: 1200px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-wrap {
+    flex: 1;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-wrap.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    background: var(--white);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: var(--pad-v) var(--pad-h) clamp(24px, 5vh, 40px);
+  }
+  .face-back { transform: rotateY(180deg); }
+
+  /* Front */
+  .front-headline {
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(24px, 6.5vw, 48px);
+    color: var(--black);
+    line-height: 1.1;
+    margin-bottom: clamp(16px, 4vh, 36px);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .habit-area-wrap {
+    flex: 1;
+    position: relative;
+    cursor: text;
+  }
+
+  .habit-textarea {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 100;
+    font-style: italic;
+    font-size: clamp(18px, 5vw, 36px);
+    color: var(--black);
+    line-height: 1.45;
+    caret-color: var(--black);
+    padding: 0;
+  }
+
+  .habit-placeholder {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    user-select: none;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 100;
+    font-style: italic;
+    font-size: clamp(18px, 5vw, 36px);
+    color: #ccc;
+    line-height: 1.45;
+    white-space: nowrap;
+  }
+
+  /* Back */
+  .back-habit-label {
+    font-weight: 100;
+    font-style: italic;
+    font-size: clamp(11px, 2.5vw, 15px);
+    color: #999;
+    margin-bottom: clamp(10px, 2.5vh, 22px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    min-height: 1.4em;
+    flex-shrink: 0;
+  }
+
+  .back-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(10px, 2.5vh, 20px);
+  }
+
+  .streak-block {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 1vh, 7px);
+  }
+
+  .circles-grid {
+    display: grid;
+    grid-template-columns: repeat(7, var(--circle-size));
+    gap: var(--gap);
+  }
+
+  .circle {
+    width: var(--circle-size);
+    height: var(--circle-size);
+    border-radius: 50%;
+    border: 2px solid var(--black);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s;
+  }
+  .circle::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--black);
+    transform: scale(0);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .circle.filled::after { transform: scale(1); }
+  .circle:active { transform: scale(0.86); }
+  .circle.locked { border-color: #ddd; cursor: default; pointer-events: none; }
+
+  @keyframes rippleFill {
+    0%   { transform: scale(0); }
+    60%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+  .circle.ripple::after {
+    animation: rippleFill 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .streak-done-msg {
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(10px, 2.2vw, 14px);
+    color: var(--black);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s;
+  }
+  .streak-done-msg.visible { opacity: 1; transform: translateY(0); }
+
+  .final-msg {
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(14px, 3.5vw, 24px);
+    color: var(--black);
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-top: clamp(4px, 1vh, 10px);
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+  .final-msg.visible { opacity: 1; transform: scale(1); }
+
+  /* ── Celebration overlay ── */
+  .celebration {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .celebration.active { display: flex; }
+
+  .cel-wash {
+    position: absolute;
+    inset: 0;
+    background: var(--white);
+    opacity: 0;
+  }
+
+  .cel-text {
+    position: relative;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(28px, 8vw, 56px);
+    color: var(--black);
+    text-align: center;
+    line-height: 1.2;
+    opacity: 0;
+    transform: scale(0.35);
+    pointer-events: none;
+  }
+
+  .cel-btn {
+    position: relative;
+    margin-top: clamp(20px, 4vh, 36px);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    border: 1.5px solid var(--black);
+    border-radius: 8px;
+    padding: 8px 16px;
+    background: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--black);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: background 0.15s;
+  }
+  .cel-btn span { font-weight: 100; font-style: italic; }
+  .cel-btn:hover { background: #f5f5f5; }
+
+  /* Confetti */
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100px) rotate(720deg); opacity: 0; }
+  }
+  .confetti-dot {
+    position: fixed;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--black);
+    pointer-events: none;
+    animation: confettiFall 0.9s ease forwards;
+    z-index: 490;
+  }
+
+  /* Confirm overlay */
+  .confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    align-items: center;
+    justify-content: center;
+    z-index: 600;
+  }
+  .confirm-overlay.show { display: flex; }
+
+  .confirm-box {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px 24px;
+    max-width: 280px;
+    width: 88%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .confirm-box p { font-size: 14px; color: var(--black); margin-bottom: 22px; line-height: 1.6; }
+  .confirm-box strong { font-weight: 900; font-style: italic; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+  .btn {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    border-radius: 7px; padding: 9px 20px;
+    cursor: pointer;
+    border: 1.5px solid var(--black);
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-cancel  { background: var(--white); color: var(--black); }
+  .btn-confirm { background: var(--black); color: var(--white); }
+  .btn-cancel:hover  { background: #f0f0f0; }
+  .btn-confirm:hover { background: #333; }
+
+  /* Tablet+ */
+  @media (min-width: 431px) {
+    body { background: #d8d6d1; }
+    .card-shell { box-shadow: 0 4px 40px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.08); }
+    :root { --circle-size: 40px; --gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card-shell">
+  <div class="chrome">
+    <div class="logo" id="logoBtn">
+      <span class="logo-bold">Habit</span>
+      <span class="logo-thin">card</span>
+    </div>
+  </div>
+
+  <div class="scene">
+    <div class="card-wrap" id="cardWrap">
+
+      <div class="face face-front" id="faceFront">
+        <div class="front-headline">My new habit is…</div>
+        <div class="habit-area-wrap" id="habitAreaWrap">
+          <textarea class="habit-textarea" id="habitTextarea" maxlength="120" autocomplete="off" spellcheck="false"></textarea>
+          <div class="habit-placeholder" id="habitPlaceholder">write your habit here</div>
+        </div>
+      </div>
+
+      <div class="face face-back" id="faceBack">
+        <div class="back-habit-label" id="backHabitLabel"></div>
+        <div class="back-content">
+          <div class="streak-block">
+            <div class="circles-grid" id="grid1"></div>
+            <div class="streak-done-msg" id="msg1">Streak 1, done!</div>
+          </div>
+          <div class="streak-block">
+            <div class="circles-grid" id="grid2"></div>
+            <div class="streak-done-msg" id="msg2">Streak 2, woohoo!</div>
+          </div>
+          <div class="streak-block">
+            <div class="circles-grid" id="grid3"></div>
+            <div class="streak-done-msg" id="msg3">Streak 3, holee!</div>
+          </div>
+          <div class="final-msg" id="finalMsg">You got the habit!</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Celebration -->
+<div class="celebration" id="celebration">
+  <div class="cel-wash" id="celWash"></div>
+  <div class="cel-text" id="celText">You got<br>the habit!</div>
+  <button class="cel-btn" id="celBtn"><span>Start a new </span>habit<span>?</span></button>
+</div>
+
+<!-- Confirm start over -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <p>This will clear your habit and all your progress.<br><strong>Are you sure?</strong></p>
+    <div class="confirm-actions">
+      <button class="btn btn-cancel" id="cancelReset">Keep going</button>
+      <button class="btn btn-confirm" id="confirmReset">Start over</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'habitCard_v4';
+  const DAYS = 21;
+  const STREAKS = 3;
+
+  let state = {
+    habit: '',
+    circles: Array(STREAKS * DAYS).fill(false),
+    activeStreak: 0,
+    celebrated: false
+  };
+
+  function loadState() {
+    try {
+      const s = localStorage.getItem(STORAGE_KEY);
+      if (s) state = { ...state, ...JSON.parse(s) };
+    } catch(e) {}
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  const textarea    = document.getElementById('habitTextarea');
+  const placeholder = document.getElementById('habitPlaceholder');
+  const cardWrap    = document.getElementById('cardWrap');
+
+  function updatePlaceholder() {
+    placeholder.style.display = textarea.value.length > 0 ? 'none' : 'block';
+  }
+
+  function updateBackLabel() {
+    document.getElementById('backHabitLabel').textContent = state.habit || '';
+  }
+
+  /* ── Build grids ── */
+  function buildGrids() {
+    for (let s = 0; s < STREAKS; s++) {
+      const grid = document.getElementById(`grid${s + 1}`);
+      grid.innerHTML = '';
+      const locked = s > state.activeStreak;
+      for (let d = 0; d < DAYS; d++) {
+        const idx = s * DAYS + d;
+        const c = document.createElement('div');
+        c.className = 'circle'
+          + (locked ? ' locked' : '')
+          + (state.circles[idx] ? ' filled' : '');
+        c.dataset.idx = idx;
+        if (!locked) c.addEventListener('click', onCircleClick);
+        grid.appendChild(c);
+      }
+    }
+  }
+
+  /* ── Circle click ── */
+  function onCircleClick(e) {
+    e.stopPropagation();
+    const idx = parseInt(this.dataset.idx);
+    const streakIdx = Math.floor(idx / DAYS);
+    if (streakIdx > state.activeStreak) return;
+    state.circles[idx] = !state.circles[idx];
+    this.classList.toggle('filled', state.circles[idx]);
+    saveState();
+    checkStreakComplete(streakIdx);
+  }
+
+  /* ── Check streak complete ── */
+  function checkStreakComplete(streakIdx) {
+    const start = streakIdx * DAYS;
+    const complete = state.circles.slice(start, start + DAYS).every(Boolean);
+    if (!complete) return;
+
+    // Ripple wave
+    const circs = document.getElementById(`grid${streakIdx + 1}`).querySelectorAll('.circle');
+    circs.forEach((c, i) => {
+      setTimeout(() => {
+        c.classList.remove('ripple');
+        void c.offsetWidth;
+        c.classList.add('filled', 'ripple');
+      }, i * 16);
+    });
+
+    setTimeout(() => {
+      document.getElementById(`msg${streakIdx + 1}`).classList.add('visible');
+
+      if (streakIdx < STREAKS - 1 && state.activeStreak === streakIdx) {
+        state.activeStreak = streakIdx + 1;
+        saveState();
+        setTimeout(() => unlockStreak(streakIdx + 1), 700);
+      }
+
+      if (streakIdx === STREAKS - 1 && !state.celebrated) {
+        state.celebrated = true;
+        saveState();
+        setTimeout(() => {
+          document.getElementById('finalMsg').classList.add('visible');
+          spawnConfetti();
+          setTimeout(() => triggerCelebration(), 1400);
+        }, 500);
+      }
+    }, DAYS * 16 + 200);
+  }
+
+  /* ── Unlock next streak ── */
+  function unlockStreak(streakIdx) {
+    const locked = document.getElementById(`grid${streakIdx + 1}`).querySelectorAll('.circle.locked');
+    locked.forEach((c, i) => {
+      setTimeout(() => {
+        c.classList.remove('locked');
+        c.addEventListener('click', onCircleClick);
+        c.animate([
+          { transform: 'scale(1)',    borderColor: '#ddd' },
+          { transform: 'scale(1.1)', borderColor: '#111' },
+          { transform: 'scale(1)',   borderColor: '#111' }
+        ], { duration: 280, easing: 'ease-out', fill: 'forwards' });
+      }, i * 14);
+    });
+  }
+
+  /* ── Confetti ── */
+  function spawnConfetti() {
+    for (let i = 0; i < 28; i++) {
+      setTimeout(() => {
+        const dot = document.createElement('div');
+        dot.className = 'confetti-dot';
+        dot.style.left = Math.random() * 92 + '%';
+        dot.style.top  = Math.random() * 65 + '%';
+        document.body.appendChild(dot);
+        setTimeout(() => dot.remove(), 1000);
+      }, i * 30);
+    }
+  }
+
+  /* ── Celebration sequence ── */
+  function triggerCelebration() {
+    const cel  = document.getElementById('celebration');
+    const wash = document.getElementById('celWash');
+    const text = document.getElementById('celText');
+    const btn  = document.getElementById('celBtn');
+
+    // Hard-reset all elements, no transitions yet
+    wash.style.cssText = 'opacity:0;';
+    text.style.cssText = 'opacity:0; transform:scale(0.35);';
+    btn.style.cssText  = 'opacity:0; transform:translateY(8px); pointer-events:none;';
+
+    cel.classList.add('active');
+
+    // Phase 1 — text zooms out huge
+    setTimeout(() => {
+      text.style.transition = 'opacity 0.45s ease, transform 0.65s cubic-bezier(0.15, 0, 0.1, 1)';
+      text.style.opacity    = '1';
+      text.style.transform  = 'scale(2.8)';
+    }, 60);
+
+    // Phase 2 — white wash sweeps over it
+    setTimeout(() => {
+      wash.style.transition = 'opacity 0.55s ease';
+      wash.style.opacity    = '1';
+    }, 500);
+
+    // Phase 3 — behind the white, reset text to small
+    setTimeout(() => {
+      text.style.transition = 'none';
+      text.style.opacity    = '0';
+      text.style.transform  = 'scale(0.85)';
+    }, 1100);
+
+    // Phase 4 — text springs back in at natural size
+    setTimeout(() => {
+      text.style.transition = 'opacity 0.5s ease, transform 0.65s cubic-bezier(0.34, 1.45, 0.64, 1)';
+      text.style.opacity    = '1';
+      text.style.transform  = 'scale(1)';
+    }, 1650);
+
+    // Phase 5 — button floats up
+    setTimeout(() => {
+      btn.style.transition    = 'opacity 0.4s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s';
+      btn.style.opacity       = '1';
+      btn.style.transform     = 'translateY(0)';
+      btn.style.pointerEvents = 'all';
+    }, 2300);
+  }
+
+  /* ── Show celebration immediately (on reload after completion) ── */
+  function showCelebrationDirect() {
+    const cel  = document.getElementById('celebration');
+    const wash = document.getElementById('celWash');
+    const text = document.getElementById('celText');
+    const btn  = document.getElementById('celBtn');
+    cel.classList.add('active');
+    wash.style.cssText = 'opacity:1;';
+    text.style.cssText = 'opacity:1; transform:scale(1);';
+    btn.style.cssText  = 'opacity:1; transform:translateY(0); pointer-events:all;';
+  }
+
+  /* ── Reset app ── */
+  function resetApp() {
+    localStorage.removeItem(STORAGE_KEY);
+    state = { habit: '', circles: Array(STREAKS * DAYS).fill(false), activeStreak: 0, celebrated: false };
+
+    const cel  = document.getElementById('celebration');
+    const wash = document.getElementById('celWash');
+    const text = document.getElementById('celText');
+    const btn  = document.getElementById('celBtn');
+
+    // Fade out celebration
+    wash.style.transition = 'opacity 0.3s ease';
+    text.style.transition = 'opacity 0.3s ease';
+    btn.style.transition  = 'opacity 0.3s ease';
+    wash.style.opacity = '0';
+    text.style.opacity = '0';
+    btn.style.opacity  = '0';
+    btn.style.pointerEvents = 'none';
+
+    setTimeout(() => {
+      cel.classList.remove('active');
+      // Clear inline styles for next time
+      wash.style.cssText = '';
+      text.style.cssText = '';
+      btn.style.cssText  = '';
+    }, 350);
+
+    cardWrap.classList.remove('flipped');
+    document.querySelectorAll('.streak-done-msg').forEach(m => m.classList.remove('visible'));
+    document.getElementById('finalMsg').classList.remove('visible');
+    document.getElementById('confirmOverlay').classList.remove('show');
+    renderState();
+  }
+
+  /* ── Render from state ── */
+  function renderState() {
+    textarea.value = state.habit || '';
+    updatePlaceholder();
+    updateBackLabel();
+    buildGrids();
+
+    for (let s = 0; s < STREAKS; s++) {
+      const complete = state.circles.slice(s * DAYS, s * DAYS + DAYS).every(Boolean);
+      if (complete) document.getElementById(`msg${s + 1}`).classList.add('visible');
+    }
+
+    if (state.circles.every(Boolean)) {
+      document.getElementById('finalMsg').classList.add('visible');
+      if (state.celebrated) showCelebrationDirect();
+    }
+  }
+
+  /* ── Flip ── */
+  document.getElementById('faceFront').addEventListener('click', function(e) {
+    if (textarea.contains(e.target) || e.target === textarea) return;
+    if (document.getElementById('habitAreaWrap').contains(e.target)) {
+      textarea.focus();
+      return;
+    }
+    cardWrap.classList.add('flipped');
+  });
+
+  document.getElementById('faceBack').addEventListener('click', function(e) {
+    if (e.target.classList.contains('circle')) return;
+    cardWrap.classList.remove('flipped');
+  });
+
+  /* ── Textarea ── */
+  textarea.addEventListener('input', function() {
+    state.habit = this.value;
+    saveState();
+    updatePlaceholder();
+    updateBackLabel();
+  });
+  textarea.addEventListener('click', e => e.stopPropagation());
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (state.habit.trim().length > 0) {
+        cardWrap.classList.add('flipped');
+        textarea.blur();
+      }
+    }
+  });
+  document.getElementById('habitAreaWrap').addEventListener('click', function(e) {
+    e.stopPropagation();
+    textarea.focus();
+  });
+
+  /* ── Logo = confirm start over; double-click = test celebration ── */
+  document.getElementById('logoBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('confirmOverlay').classList.add('show');
+  });
+  document.getElementById('logoBtn').addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    document.getElementById('confirmOverlay').classList.remove('show');
+    triggerCelebration();
+  });
+
+  /* ── Confirm overlay ── */
+  document.getElementById('cancelReset').addEventListener('click', () => {
+    document.getElementById('confirmOverlay').classList.remove('show');
+  });
+  document.getElementById('confirmReset').addEventListener('click', () => resetApp());
+
+  /* ── Cel button ── */
+  document.getElementById('celBtn').addEventListener('click', () => resetApp());
+
+  /* ── Init ── */
+  loadState();
+  renderState();
+</script>
+</body>
+</html>
