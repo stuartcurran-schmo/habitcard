@@ -93,7 +93,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding: var(--pad-v) var(--pad-h) clamp(24px, 5vh, 40px);
+    padding: var(--pad-v) var(--pad-h) clamp(40px, 7vh, 56px);
   }
   .face-back {
     transform: rotateY(180deg);
@@ -436,6 +436,23 @@
     .streak-done-msg { font-size: 12px; }
     .final-msg { margin-top: 6px; font-size: 16px; }
   }
+  .footer {
+    position: fixed;
+    bottom: 10px;
+    left: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 100;
+    font-size: 10px;
+    color: #ccc;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .footer a {
+    color: #ccc;
+    text-decoration: none;
+    pointer-events: all;
+  }
+  .footer a:hover { color: #aaa; }
 </style>
 </head>
 <body>
@@ -850,5 +867,6 @@
   if (state.cardColour) applyCardColour(state.cardColour);
   renderState();
 </script>
+<div class="footer"><a href="https://schmo.uk/blog/habit-in-your-pocket" target="_blank" rel="noopener">Made by schmo.</a></div>
 </body>
 </html>
